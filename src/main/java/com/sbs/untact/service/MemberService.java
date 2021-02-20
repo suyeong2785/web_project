@@ -22,7 +22,7 @@ public class MemberService {
 		return new ResultData("S-1", String.format("%s님 가입되셨습니다.", param.get("name")), "id", id);
 	}
 	
-	public Member getMembe(int id) {
+	public Member getMember(int id) {
 		return memberDao.getMember(id);
 	}
 
@@ -34,6 +34,10 @@ public class MemberService {
 		memberDao.modifyMember(param);
 
 		return new ResultData("S-1", "회원정보를 수정하였습니다.");
+	}
+
+	public boolean isAdmin(int actorId) {
+		return actorId == 1;
 	}
 
 }

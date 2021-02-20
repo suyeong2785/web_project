@@ -3,11 +3,27 @@
   PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
   "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
 
+<!-- SELECT article.*, member.nickname
+FROM article
+LEFT JOIN `member`
+ON article.memberId = member.id
+ -->
 <mapper namespace="com.sbs.untact.dao.ArticleDao">
 	<select id="getArticle" resultType="Article">
 		SELECT *
 		FROM article
-		WHERE id
+		WHERE article.id
+		= #{id}
+	</select>
+	
+	<select id="getForPrintArticle" resultType="Article">
+		SELECT article.*, 
+		IFNULL( member.nickname, "탈퇴한 회원") 
+		AS extra_writer
+		FROM article
+		LEFT JOIN `member`
+		ON article.memberId = member.id
+		WHERE article.id
 		= #{id}
 	</select>
 
@@ -30,12 +46,42 @@
 			</if>
 		ORDER BY id DESC
 	</select>
+	
+	<select id="getForPrintArticles" resultType="Article">
+		SELECT A.*,
+		IFNULL(M.nickname, "탈퇴한 회원")
+		AS extra_writer 
+		FROM article AS A
+		LEFT JOIN `member` AS M
+		ON A.memberId = M.id
+		WHERE 1
+			<if test="boardId != null">
+			AND boardId = #{boardId}
+			</if>
+			<if test="searchKeywordType == 'title'">
+				AND title LIKE CONCAT('%', #{searchKeyword}, '%')
+			</if>
+			<if test="searchKeywordType == 'body'">
+				AND `body` LIKE CONCAT('%', #{searchKeyword}, '%')
+			</if>
+			<if test="searchKeywordType == 'titleAndBody'">
+				AND (title LIKE CONCAT('%', #{searchKeyword}, '%') OR
+				`body` LIKE CONCAT('%', #{searchKeyword}, '%'))
+			</if>
+		ORDER BY id DESC
+		<if test="limitStart != null and limitTake != null">
+		Limit #{limitStart}, #{limitTake} 
+		</if>
+		
+	</select>
 
 	<insert id="addArticle" useGeneratedKeys="true" keyProperty="id">
 		INSERT INTO article
 		SET regDate = NOW(),
 		updateDate =
 		NOW(),
+		memberId =
+		#{memberId},
 		title =
 		#{title},
 		`body` = #{body}
@@ -62,6 +108,59 @@
 		</set>
 	</update>
 
+	<select id="getBoard" resultType="Board">
+		SELECT *
+		FROM board
+		WHERE id
+		= #{boardId}
+	</select>
+	
+	<insert id="addReply" useGeneratedKeys="true" keyProperty="id">
+		INSERT INTO reply
+		SET regDate = NOW(),
+		updateDate =
+		NOW(),
+		articleId =
+		#{articleId},
+		memberId =
+		#{memberId},
+		`body` = #{body}
+	</insert>
+	
+	<update id="modifyReply">
+		UPDATE reply
+		<set>
+			<if test="body != null">
+				updateDate = NOW(),
+				`body` = #{body}
+				WHERE id = #{id}
+			</if>
+			
+			
+		</set>
+	</update>
+	
+	<select id="getReply" resultType="Reply">
+		SELECT *
+		FROM reply
+		WHERE id
+		= #{id}
+	</select>
+	
+	<delete id="deleteReply">
+		DELETE FROM reply
+		WHERE id = #{id}
+	</delete>
+	
+	<select id="getForPrintReplies" resultType="Reply">
+		SELECT *
+		FROM reply
+		where 1
+		<if test="articleId != null">
+		AND articleId = #{articleId} 
+		</if>
+		ORDER BY id DESC
+	</select>
 </mapper>
 
 
